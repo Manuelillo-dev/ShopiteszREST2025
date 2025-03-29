@@ -1,16 +1,18 @@
-# This is a sample Python script.
+#Importar la clase fastapi del framework#
+import uvicorn
+from fastapi import FastAPI
+from routers import pedidosRouter,productosRouter, usuariosRouter
 
-# Press Mayús+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+#Crear una instancia de la clase fastapi#
+app=FastAPI()
+app.include_router(pedidosRouter.router)
+app.include_router(productosRouter.router)
+app.include_router(usuariosRouter.router)
 
+@app.get("/")
+async def home():
+    salida = {"mensaje": "Bienvenido a la PEDIDOSREST"}
+    return salida
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    uvicorn.run("main:app", host='127.0.0.1', reload=True)
