@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 from pydantic import BaseModel
 
@@ -20,11 +20,40 @@ class PedidoInsert(BaseModel):
     detalle:list[Item]
 
 class DatosPago(BaseModel):
-    fecha:datetime
+    fecha:date|None=datetime.today()
     monto:float
     noTarjeta:str
     estatus:str
 
 class PedidoPagar(BaseModel):
-    estatus: str
-    pago: list[DatosPago]
+    estatus:str|None='Pagado'
+    pago: DatosPago
+
+class Salida(BaseModel):
+    estatus:str
+    mensaje: str
+
+class Comprador(BaseModel):
+    idComprador:int
+    nombre:str
+
+class Vendedor(BaseModel):
+    idVendedor:int
+    nombre:str
+
+class PedidoSelect(BaseModel):
+    idPedido:str
+    fechaRegistro:date
+    fechaConfirmacion:date
+    fechaCierre:date
+    costosEnvio:float
+    subtotal:float
+    totalPagar:float
+    estatus:str
+    motivoCancelacion:str|None=None
+    valoracion:int|None=None
+    comprador:Comprador
+    vendedor:Vendedor
+
+class PedidosSalida(Salida):
+    pedidos:list[PedidoSelect]
