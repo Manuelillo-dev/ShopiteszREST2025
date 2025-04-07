@@ -1,7 +1,10 @@
 from fastapi import APIRouter
 
-router=APIRouter(prefix="/Usuarios", tags=["Usuarios"])
+router = APIRouter(
+    prefix="/usuarios",
+    tags=["Usuarios"]
+)
 
 @router.get("/usuarios/login")
-async def loginUsuarios():
-    return {"mensaje":"validando credenciales del usuario"}
+async def login():
+    return {"mensaje": "Validando las credenciales del usuario"}
