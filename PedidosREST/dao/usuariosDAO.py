@@ -13,3 +13,11 @@ class UsuarioDAO:
         except:
             respuesta = False
         return respuesta
+
+    def comprobarTarjeta(self, idUsuario: int, noTarjeta: str):
+        count = 0
+        try:
+            count = self.db.usuarios.count_documents({"_id": idUsuario, "estatus": "A", "tarjetas.noTarjeta": noTarjeta})
+        except Exception as ex:
+            print(ex)
+        return count
