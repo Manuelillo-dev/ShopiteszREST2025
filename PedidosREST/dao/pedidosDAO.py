@@ -1,4 +1,6 @@
-from models.PedidoModel import PedidoInsert, Salida, PedidosSalida, PedidoPay
+from tkinter.constants import PROJECTING
+
+from models.PedidoModel import PedidoInsert, Salida, PedidosSalida, PedidoPay, PedidoCancelacion
 from datetime import datetime
 from dao.usuariosDAO import UsuarioDAO
 from fastapi.encoders import jsonable_encoder
@@ -79,4 +81,37 @@ class PedidoDAO:
             print(ex)
             salida.estatus = "ERROR"
             salida.mensaje = "Error al pagar el pedido, consulta al adminstrador"
+        return salida
+
+    def consultarEstatusPedido(self, idPedido):
+        estatus = None
+        try:
+            estatus = self.db.pedidosView.find_one({"idPedido": idPedido}, projection={"estatus": True})
+        except Exception as ex:
+            print(ex)
+        return estatus
+
+    def cancelarPedido(self, idPedido: str, pedidoCancelacion: PedidoCancelacion):
+        salida = Salida(estatus="", mensaje="")
+        try:
+            objeto = self.consultarEstatusPedido(idPedido)
+            if objeto['estatus'] == 'Captura':
+                self.db.pedidos.update_one({"idPedido": idPedido}, {
+                    "$set": {"estatus": "Cancelado", "motivoCancelacion": pedidoCancelacion.motivoCancelacion}})
+                salida.estatus = "OK"
+                salida.estatus = "Pedido Cancelado con exito"
+            else:
+                if objeto["estatus"] == 'Pagado':
+                    self.db.pedidos.update_one({"idPedido": idPedido}, {
+                        "$set": {"estatus": "Devolucion", "motivoCancelacion": pedidoCancelacion.motivoCancelacion}})
+                    salida.estatus = "OK"
+                    salida.estatus = "Se ha iniciado el proceso de Reembolso"
+                else:
+                    salida.estatus = "OK"
+                    salida.estatus = "El pedido no existe o no se encuentra en Captura/Pagado"
+
+        except Exception as ex:
+            print(ex)
+            salida.estatus = "ERROR"
+            salida.estatus = "El pedido no se puede cancelar, consulta al administrador."
         return salida
