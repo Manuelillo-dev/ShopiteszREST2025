@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="de54a359-855e-4023-a4bd-28da5effae15" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/PedidosREST/dao/pedidosDAO.py" beforeDir="false" afterPath="$PROJECT_DIR$/PedidosREST/dao/pedidosDAO.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PedidosREST/models/PedidoModel.py" beforeDir="false" afterPath="$PROJECT_DIR$/PedidosREST/models/PedidoModel.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PedidosREST/routers/pedidosRouter.py" beforeDir="false" afterPath="$PROJECT_DIR$/PedidosREST/routers/pedidosRouter.py" afterDir="false" />
-    </list>
+    <list default="true" id="de54a359-855e-4023-a4bd-28da5effae15" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -14,21 +10,21 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 6
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 6
+}</component>
   <component name="ProjectId" id="2wMoZVNadtD4OKGfYprSADzVXCN" />
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "kotlin-language-version-configured": "true",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -46,7 +42,11 @@
       <option name="presentableId" value="Default" />
       <updated>1745860869904</updated>
       <workItem from="1745860870029" duration="9000" />
+      <workItem from="1745985081671" duration="18000" />
     </task>
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
 </project>

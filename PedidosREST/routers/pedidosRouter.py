@@ -4,7 +4,7 @@ from urllib import request
 from dao.pedidosDAO import PedidoDAO
 from fastapi import APIRouter, Request
 from models.PedidoModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect, \
-    PedidoCancelacion
+    PedidoCancelacion, PedidoConfirmar
 
 router = APIRouter(
     prefix="/pedidos",
@@ -43,3 +43,9 @@ async def agregarProductoPedido(idPedido:str, item:Item):
 async def pagarPedido(idPedido:str, pedidoPay:PedidoPay, request: Request):
     pedidoDAO = PedidoDAO(request.app.db)
     return pedidoDAO.pagarPedido(idPedido, pedidoPay)
+
+#Practica 1
+@router.put("/{idPedido}/confirmar", summary="Confirmar Pedido", response_model=Salida)
+async def confirmarPedido(idPedido: str, pedidoConfirmar: PedidoConfirmar, request: Request):
+    pedidoDAO = PedidoDAO(request.app.db)
+    return pedidoDAO.confirmarPedido(idPedido, pedidoConfirmar)

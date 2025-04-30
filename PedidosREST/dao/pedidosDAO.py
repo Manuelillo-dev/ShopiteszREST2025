@@ -1,6 +1,6 @@
 from tkinter.constants import PROJECTING
 
-from models.PedidoModel import PedidoInsert, Salida, PedidosSalida, PedidoPay, PedidoCancelacion
+from models.PedidoModel import PedidoInsert, Salida, PedidosSalida, PedidoPay, PedidoCancelacion,PedidoConfirmar
 from datetime import datetime
 from dao.usuariosDAO import UsuarioDAO
 from fastapi.encoders import jsonable_encoder
@@ -115,3 +115,53 @@ class PedidoDAO:
             salida.estatus = "ERROR"
             salida.estatus = "El pedido no se puede cancelar, consulta al administrador."
         return salida
+
+    #Practica 1
+
+    def confirmarPedido(self, idPedido: str, pedidoConfirmar: PedidoConfirmar):
+        salida = Salida(estatus="", mensaje="")
+        try:
+            # Buscar el pedido usando _id que es un ObjectId
+            pedido = self.db.pedidos.find_one({"_id": ObjectId(idPedido)})
+
+            # Validar si existe y si está en estatus 'Pagado'
+            if pedido and pedido.get("estatus") == "Pagado":
+                # Validar cantidades enviadas
+                valido = True
+                for detallePedido in pedido['detalle']:
+                    encontrado = False
+                    for detalleEnvio in pedidoConfirmar.envio.detalle:
+                        if detallePedido['idProducto'] == detalleEnvio.idProducto:
+                            if detallePedido['cantidad'] == detalleEnvio.cantidadEnviada:
+                                encontrado = True
+                            else:
+                                salida.estatus = "ERROR"
+                                salida.mensaje = f"Cantidad enviada incorrecta para producto {detalleEnvio.idProducto}"
+                                return salida
+                    if not encontrado:
+                        salida.estatus = "ERROR"
+                        salida.mensaje = f"Producto {detallePedido['idProducto']} no encontrado en el envío"
+                        return salida
+
+                # Si pasa validaciones, hacemos el update en Mongo
+                self.db.pedidos.update_one(
+                    {"_id": ObjectId(idPedido)},
+                    {
+                        "$set": {
+                            "fechaConfirmacion": pedidoConfirmar.fechaConfirmacion,
+                            "estatus": pedidoConfirmar.estatus,
+                            "envio": jsonable_encoder(pedidoConfirmar.envio)
+                        }
+                    }
+                )
+                salida.estatus = "OK"
+                salida.mensaje = f"Pedido {idPedido} confirmado con éxito"
+            else:
+                salida.estatus = "ERROR"
+                salida.mensaje = "El pedido no se puede confirmar porque no está pagado o no existe"
+        except Exception as ex:
+            print(ex)
+            salida.estatus = "ERROR"
+            salida.mensaje = "Error al confirmar el pedido, consulta al administrador"
+        return salida
+

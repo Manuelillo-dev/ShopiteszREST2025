@@ -61,3 +61,20 @@ class PedidosSalida(Salida):
 class PedidoCancelacion(BaseModel):
     motivoCancelacion:str
 
+#Practica 1
+class DetalleEnvio(BaseModel):
+    idProducto: int
+    cantidadEnviada: int
+
+class Envio(BaseModel):
+    fechaSalida: datetime
+    fechaEntPlan: datetime
+    noGuia: str
+    idPaqueteria: int
+    detalle: list[DetalleEnvio]
+
+class PedidoConfirmar(BaseModel):
+    fechaConfirmacion: datetime
+    estatus: str | None = 'Confirmado'
+    envio: Envio
+
