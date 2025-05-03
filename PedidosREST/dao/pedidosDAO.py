@@ -1,6 +1,4 @@
-from tkinter.constants import PROJECTING
-
-from models.PedidoModel import PedidoInsert, Salida, PedidosSalida, PedidoPay, PedidoCancelacion,PedidoConfirmar
+from models.PedidoModel import PedidoInsert, Salida, PedidosSalida, PedidoPay, PedidoCancelacion, PedidoConfirmacion, PedidoSelectID, PedidosSalidaID
 from datetime import datetime
 from dao.usuariosDAO import UsuarioDAO
 from fastapi.encoders import jsonable_encoder
@@ -83,7 +81,7 @@ class PedidoDAO:
             salida.mensaje = "Error al pagar el pedido, consulta al adminstrador"
         return salida
 
-    def consultarEstatusPedido(self, idPedido):
+    def consultarEstatusPedido(self, idPedido: str):
         estatus = None
         try:
             estatus = self.db.pedidosView.find_one({"idPedido": idPedido}, projection={"estatus": True})
@@ -95,73 +93,86 @@ class PedidoDAO:
         salida = Salida(estatus="", mensaje="")
         try:
             objeto = self.consultarEstatusPedido(idPedido)
-            if objeto['estatus'] == 'Captura':
-                self.db.pedidos.update_one({"idPedido": idPedido}, {
-                    "$set": {"estatus": "Cancelado", "motivoCancelacion": pedidoCancelacion.motivoCancelacion}})
+            if objeto["estatus"] == "Captura":
+                self.db.pedidos.update_one({"idPedido":idPedido},
+                                            {"$set": {"estatus": "Cancelado", "motivoCancelacion": pedidoCancelacion.motivoCancelacion}})
                 salida.estatus = "OK"
-                salida.estatus = "Pedido Cancelado con exito"
+                salida.mensaje = "Pedido cancelado con exito"
+            elif objeto["estatus"] == "Pagado":
+                self.db.pedidos.update_one({"idPedido": idPedido},
+                                           {"$set": {"estatus": "Devolucion", "motivoCancelacion": pedidoCancelacion.motivoCancelacion}})
+                salida.estatus = "OK"
+                salida.mensaje = "Se ha iniciado el proceso de reembolso"
             else:
-                if objeto["estatus"] == 'Pagado':
-                    self.db.pedidos.update_one({"idPedido": idPedido}, {
-                        "$set": {"estatus": "Devolucion", "motivoCancelacion": pedidoCancelacion.motivoCancelacion}})
-                    salida.estatus = "OK"
-                    salida.estatus = "Se ha iniciado el proceso de Reembolso"
-                else:
-                    salida.estatus = "OK"
-                    salida.estatus = "El pedido no existe o no se encuentra en Captura/Pagado"
-
+                salida.estatus = "OK"
+                salida.mensaje = "El pedido no existe o no se encuentran en Captura / Pagado"
         except Exception as ex:
             print(ex)
             salida.estatus = "ERROR"
-            salida.estatus = "El pedido no se puede cancelar, consulta al administrador."
+            salida.mensaje = "El pedido no se puede cancelar, consulta al adminstrador."
         return salida
-
-    #Practica 1
-
-    def confirmarPedido(self, idPedido: str, pedidoConfirmar: PedidoConfirmar):
+    
+# Práctica 1
+    def confirmarPedido(self, idPedido: str, pedidoConfirmacion: PedidoConfirmacion) -> Salida:
         salida = Salida(estatus="", mensaje="")
         try:
-            # Buscar el pedido usando _id que es un ObjectId
             pedido = self.db.pedidos.find_one({"_id": ObjectId(idPedido)})
-
-            # Validar si existe y si está en estatus 'Pagado'
-            if pedido and pedido.get("estatus") == "Pagado":
-                # Validar cantidades enviadas
-                valido = True
-                for detallePedido in pedido['detalle']:
-                    encontrado = False
-                    for detalleEnvio in pedidoConfirmar.envio.detalle:
-                        if detallePedido['idProducto'] == detalleEnvio.idProducto:
-                            if detallePedido['cantidad'] == detalleEnvio.cantidadEnviada:
-                                encontrado = True
-                            else:
-                                salida.estatus = "ERROR"
-                                salida.mensaje = f"Cantidad enviada incorrecta para producto {detalleEnvio.idProducto}"
-                                return salida
-                    if not encontrado:
-                        salida.estatus = "ERROR"
-                        salida.mensaje = f"Producto {detallePedido['idProducto']} no encontrado en el envío"
-                        return salida
-
-                # Si pasa validaciones, hacemos el update en Mongo
-                self.db.pedidos.update_one(
-                    {"_id": ObjectId(idPedido)},
-                    {
-                        "$set": {
-                            "fechaConfirmacion": pedidoConfirmar.fechaConfirmacion,
-                            "estatus": pedidoConfirmar.estatus,
-                            "envio": jsonable_encoder(pedidoConfirmar.envio)
-                        }
-                    }
-                )
+            if not pedido:
+                salida.estatus = "ERROR"
+                salida.mensaje = f"Pedido con id {idPedido} no encontrado."
+                return salida
+            if pedido["estatus"] != "Pagado":
+                salida.estatus = "ERROR"
+                salida.mensaje = f"El pedido debe estar en estatus Pagado. Estatus actual: {pedido.get('estatus')}"
+                return salida
+            if 'detalle' not in pedido:
+                salida.estatus = "ERROR"
+                salida.mensaje = "No se encontró el detalle del pedido."
+                return salida
+            detalle_pedido = {item['idProducto']: item['cantidad'] for item in pedido['detalle']}
+            for envioItem in pedidoConfirmacion.envio.detalle:
+                if envioItem.idProducto not in detalle_pedido:
+                    salida.estatus = "ERROR"
+                    salida.mensaje = f"Producto con id {envioItem.idProducto} no encontrado en el pedido original."
+                    return salida
+                if envioItem.cantidad != detalle_pedido.get(envioItem.idProducto):
+                    salida.estatus = "ERROR"
+                    salida.mensaje = f"La cantidad enviada ({envioItem.cantidad}) para el producto {envioItem.idProducto} no coincide con la cantidad pedida ({detalle_pedido.get(envioItem.idProducto)})."
+                    return salida
+            update_data = {
+                "$set": {
+                    "fechaConfirmacion": datetime.now(),
+                    "estatus": "Confirmado",
+                    "envio": jsonable_encoder(pedidoConfirmacion.envio)
+                }
+            }
+            result = self.db.pedidos.update_one({"_id": ObjectId(idPedido)}, update_data)
+            if result.modified_count > 0:
                 salida.estatus = "OK"
-                salida.mensaje = f"Pedido {idPedido} confirmado con éxito"
+                salida.mensaje = f"Pedido con id: {idPedido} confirmado con éxito."
             else:
                 salida.estatus = "ERROR"
-                salida.mensaje = "El pedido no se puede confirmar porque no está pagado o no existe"
+                salida.mensaje = f"No se pudo confirmar el pedido con id: {idPedido}. (Puede que ya estuviera confirmado o no se encontró)."
         except Exception as ex:
-            print(ex)
+            print(f"Error al confirmar el pedido {idPedido}: {ex}")
             salida.estatus = "ERROR"
-            salida.mensaje = "Error al confirmar el pedido, consulta al administrador"
+            salida.mensaje = "Error al confirmar el pedido, consulta al administrador."
         return salida
-
+    
+#Práctica 2
+    def consultarPedidoPorID(self, idPedido: str) -> PedidosSalidaID:
+        salida = PedidosSalidaID(estatus="", mensaje="", pedido=None)
+        try:
+            pedido_data = self.db.viewConsultaID.find_one({"idPedido": idPedido})
+            if pedido_data:
+                salida.pedido = pedido_data
+                salida.estatus = "OK"
+                salida.mensaje = f"Pedido {idPedido} encontrado con extito."
+            else:
+                salida.estatus = "ERROR"
+                salida.mensaje = f"El pedido con id {idPedido} no se ha encontrado."
+        except Exception as e:
+                print(f"Error al consultar el pedido {idPedido}: {e}")
+                salida.estatus = "ERROR"
+                salida.mensaje = "Error interno al consultar el pedido."
+        return salida
