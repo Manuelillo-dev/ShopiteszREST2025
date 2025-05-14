@@ -2,7 +2,6 @@
 import uvicorn
 from fastapi import FastAPI
 from pymongo import MongoClient
-
 from dao.database import Conexion
 from routers import pedidosRouter, productosRouter, usuariosRouter
 

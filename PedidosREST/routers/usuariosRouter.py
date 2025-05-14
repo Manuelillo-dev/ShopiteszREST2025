@@ -1,10 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+from models.UsuariosModel import Login, UsuarioSalida
+from dao.usuariosDAO import UsuarioDAO
 
 router = APIRouter(
     prefix="/usuarios",
     tags=["Usuarios"]
 )
 
-@router.get("/usuarios/login")
-async def login():
-    return {"mensaje": "Validando las credenciales del usuario"}
+@router.post("/Autenticar", response_model = UsuarioSalida, summary="Autenticar un usuario")
+async def login(login: Login, request: Request) -> UsuarioSalida:
+    usuarioDAO = UsuarioDAO(request.app.db)
+    return usuarioDAO.autenticar(login.email, login.password)
