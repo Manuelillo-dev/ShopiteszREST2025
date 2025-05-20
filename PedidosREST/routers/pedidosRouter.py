@@ -1,10 +1,9 @@
-from datetime import datetime, date
-from urllib import request
-
 from dao.pedidosDAO import PedidoDAO
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from models.PedidoModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect, \
     PedidoCancelacion, PedidoConfirmacion, PedidosSalidaID, RegistroEvento, ConsultaHistorial, PedidoEventos
+from models.UsuariosModel import UsuarioSalida
+from routers.usuariosRouter import validarUsuario
 
 router = APIRouter(
     prefix="/pedidos",
@@ -29,15 +28,18 @@ async def eliminarPedido(idPedido: str, pedidoCancelacion: PedidoCancelacion, re
     return pedidoDAO.cancelarPedido(idPedido, pedidoCancelacion)
 
 
-@router.get("/", response_model=PedidosSalida)
-async def consultaPedidos(request: Request) -> PedidosSalida:
-    pedidoDAO = PedidoDAO(request.app.db)
-    return pedidoDAO.consultaGeneral()
+@router.get("/", response_model=PedidosSalida, response_description="Consulta de Pedidos")
+async def consultaPedidos(request: Request, respuesta: UsuarioSalida = Depends(validarUsuario)) -> PedidosSalida:
+    salida = PedidosSalida(estatus="", mensaje="", pedidos=[])
+    usuario=respuesta.usuario
+    if respuesta.estatus == 'OK' and usuario['tipo'] == 'Administrador':
+        pedidoDAO = PedidoDAO(request.app.db)
+        return pedidoDAO.consultaGeneral()
+    else:
+        salida.estatus = "ERROR"
+        salida.mensaje = "Sin Auth"
+        return salida
 
-
-# @router.get("/{idPedido}")
-# async def consultarPedido(idPedido:str):
-#    return {"mensaje": "Consultando el pedido: "+idPedido}
 
 @router.put("/{idPedido}/agregarProducto")
 async def agregarProductoPedido(idPedido: str, item: Item):
@@ -66,14 +68,14 @@ async def consultarPedidoID(idPedido: str, request: Request) -> PedidosSalidaID:
 
 
 # EXAMEN - Registrar evento (POST)
-@router.post("/{idPedido}/tracking",response_model=Salida,summary="Registrar evento de tracking")
-async def registrar_evento(idPedido: str,evento: RegistroEvento,request: Request) -> Salida:
+@router.post("/{idPedido}/tracking", response_model=Salida, summary="Registrar evento de tracking")
+async def registrar_evento(idPedido: str, evento: RegistroEvento, request: Request) -> Salida:
     pedidoDAO = PedidoDAO(request.app.db)
     return pedidoDAO.registrarEvento(idPedido, evento)
 
 
 # EXAMEN - Consultar historial (GET)
-@router.get("/{idPedido}/tracking",response_model=ConsultaHistorial,summary="Consultar historial de envío")
-async def consultar_historial(idPedido: str,request: Request) -> ConsultaHistorial:
+@router.get("/{idPedido}/tracking", response_model=ConsultaHistorial, summary="Consultar historial de envío")
+async def consultar_historial(idPedido: str, request: Request) -> ConsultaHistorial:
     pedidoDAO = PedidoDAO(request.app.db)
     return pedidoDAO.consultarEventos(idPedido)
