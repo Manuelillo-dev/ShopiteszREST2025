@@ -263,3 +263,35 @@ class PedidoDAO:
             salida.mensaje = "Error interno al consultar historial"
 
         return salida
+
+    # Consulta por Comprador
+    def consultaPorComprador(self, idComprador: int):
+        salida = PedidosSalida(estatus="", mensaje="", pedidos=[])
+        try:
+            pedidos=list(self.db.pedidosView.find({"comprador.idComprador":idComprador}))
+            salida.estatus = "OK"
+            salida.mensaje = f"Listado de pedidos del comprador: {idComprador}"
+            salida.pedidos=pedidos
+
+
+        except Exception as ex:
+            print(ex)
+            salida.estatus="ERROR"
+            salida.mensaje="Error al consultar los pedidos por comprador, contacta al admin"
+        return salida
+
+    #Consulta por vendedor
+    def consultaPorVendedor(self, idVendedor: int):
+        salida = PedidosSalida(estatus="", mensaje="", pedidos=[])
+        try:
+            pedidos=list(self.db.pedidosView.find({"vendedor.idVendedor":idVendedor}))
+            salida.estatus = "OK"
+            salida.mensaje = f"Listado de pedidos del vendedor: {idVendedor}"
+            salida.pedidos=pedidos
+
+
+        except Exception as ex:
+            print(ex)
+            salida.estatus="ERROR"
+            salida.mensaje="Error al consultar los pedidos por vendedor, contacta al admin"
+        return salida

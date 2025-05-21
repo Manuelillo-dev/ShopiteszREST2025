@@ -1,5 +1,5 @@
 from dao.pedidosDAO import PedidoDAO
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from models.PedidoModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect, \
     PedidoCancelacion, PedidoConfirmacion, PedidosSalidaID, RegistroEvento, ConsultaHistorial, PedidoEventos
 from models.UsuariosModel import UsuarioSalida
@@ -31,7 +31,7 @@ async def eliminarPedido(idPedido: str, pedidoCancelacion: PedidoCancelacion, re
 @router.get("/", response_model=PedidosSalida, response_description="Consulta de Pedidos")
 async def consultaPedidos(request: Request, respuesta: UsuarioSalida = Depends(validarUsuario)) -> PedidosSalida:
     salida = PedidosSalida(estatus="", mensaje="", pedidos=[])
-    usuario=respuesta.usuario
+    usuario = respuesta.usuario
     if respuesta.estatus == 'OK' and usuario['tipo'] == 'Administrador':
         pedidoDAO = PedidoDAO(request.app.db)
         return pedidoDAO.consultaGeneral()
@@ -79,3 +79,26 @@ async def registrar_evento(idPedido: str, evento: RegistroEvento, request: Reque
 async def consultar_historial(idPedido: str, request: Request) -> ConsultaHistorial:
     pedidoDAO = PedidoDAO(request.app.db)
     return pedidoDAO.consultarEventos(idPedido)
+
+
+# Consulta de pedidos por comprador
+@router.get('/comprador/{idComprador}', summary="Consulta de pedidos por Comprador", response_model=PedidosSalida)
+async def consultaPorComprador(idComprador: int, request: Request,
+                               respuesta: UsuarioSalida = Depends(validarUsuario)) -> PedidosSalida:
+    usuario = respuesta.usuario
+    if (respuesta.estatus == "OK" and usuario['tipo'] == "Comprador" and usuario['_id']==idComprador):
+        pedidosDAO = PedidoDAO(request.app.db)
+        return pedidosDAO.consultaPorComprador(idComprador)
+    else:
+        raise HTTPException(status_code=404, detail="Sin autorizacion")
+
+# Consulta de pedidos por vendedor
+@router.get('/vendedor/{idVendedor}', summary="Consulta de pedidos por Vendedor", response_model=PedidosSalida)
+async def consultaPorVendedor(idVendedor: int, request: Request,
+                               respuesta: UsuarioSalida = Depends(validarUsuario)) -> PedidosSalida:
+    usuario = respuesta.usuario
+    if (respuesta.estatus == "OK" and usuario['tipo'] == "Vendedor" and usuario['_id']==idVendedor):
+        pedidosDAO = PedidoDAO(request.app.db)
+        return pedidosDAO.consultaPorVendedor(idVendedor)
+    else:
+        raise HTTPException(status_code=404, detail="Sin autorizacion")
