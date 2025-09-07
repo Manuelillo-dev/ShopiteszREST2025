@@ -87,29 +87,52 @@ class PedidoDAO:
             salida.mensaje = "Error al pagar el pedido, consulta al adminstrador"
         return salida
 
+    def consultarEstatusPedido(self, idPedido: str):
+        try:
+            pedido = self.db.pedidos.find_one({"_id": ObjectId(idPedido)})
+            if pedido:
+                return {"estatus": pedido.get("estatus", None)}
+            else:
+                return {"estatus": None}
+        except Exception as e:
+            print(f"[ERROR] consultando estatus del pedido: {e}")
+            return {"estatus": None}
+
     def cancelarPedido(self, idPedido: str, pedidoCancelacion: PedidoCancelacion):
         salida = Salida(estatus="", mensaje="")
         try:
             objeto = self.consultarEstatusPedido(idPedido)
+
             if objeto["estatus"] == "Captura":
-                self.db.pedidos.update_one({"idPedido": idPedido},
-                                           {"$set": {"estatus": "Cancelado",
-                                                     "motivoCancelacion": pedidoCancelacion.motivoCancelacion}})
+                self.db.pedidos.update_one(
+                    {"_id": ObjectId(idPedido)},
+                    {"$set": {
+                        "estatus": "Cancelado",
+                        "motivoCancelacion": pedidoCancelacion.motivoCancelacion
+                    }}
+                )
                 salida.estatus = "OK"
-                salida.mensaje = "Pedido cancelado con exito"
+                salida.mensaje = "Pedido cancelado con éxito"
+
             elif objeto["estatus"] == "Pagado":
-                self.db.pedidos.update_one({"idPedido": idPedido},
-                                           {"$set": {"estatus": "Devolucion",
-                                                     "motivoCancelacion": pedidoCancelacion.motivoCancelacion}})
+                self.db.pedidos.update_one(
+                    {"_id": ObjectId(idPedido)},
+                    {"$set": {
+                        "estatus": "Devolucion",
+                        "motivoCancelacion": pedidoCancelacion.motivoCancelacion
+                    }}
+                )
                 salida.estatus = "OK"
                 salida.mensaje = "Se ha iniciado el proceso de reembolso"
+
             else:
                 salida.estatus = "OK"
-                salida.mensaje = "El pedido no existe o no se encuentran en Captura / Pagado"
+                salida.mensaje = "El pedido no existe o no se encuentra en Captura / Pagado"
+
         except Exception as ex:
-            print(ex)
+            print(f"[ERROR] cancelando pedido: {ex}")
             salida.estatus = "ERROR"
-            salida.mensaje = "El pedido no se puede cancelar, consulta al adminstrador."
+            salida.mensaje = "El pedido no se puede cancelar, consulta al administrador."
         return salida
 
     # Práctica 1
@@ -268,30 +291,30 @@ class PedidoDAO:
     def consultaPorComprador(self, idComprador: int):
         salida = PedidosSalida(estatus="", mensaje="", pedidos=[])
         try:
-            pedidos=list(self.db.pedidosView.find({"comprador.idComprador":idComprador}))
+            pedidos = list(self.db.pedidosView.find({"comprador.idComprador": idComprador}))
             salida.estatus = "OK"
             salida.mensaje = f"Listado de pedidos del comprador: {idComprador}"
-            salida.pedidos=pedidos
+            salida.pedidos = pedidos
 
 
         except Exception as ex:
             print(ex)
-            salida.estatus="ERROR"
-            salida.mensaje="Error al consultar los pedidos por comprador, contacta al admin"
+            salida.estatus = "ERROR"
+            salida.mensaje = "Error al consultar los pedidos por comprador, contacta al admin"
         return salida
 
-    #Consulta por vendedor
+    # Consulta por vendedor
     def consultaPorVendedor(self, idVendedor: int):
         salida = PedidosSalida(estatus="", mensaje="", pedidos=[])
         try:
-            pedidos=list(self.db.pedidosView.find({"vendedor.idVendedor":idVendedor}))
+            pedidos = list(self.db.pedidosView.find({"vendedor.idVendedor": idVendedor}))
             salida.estatus = "OK"
             salida.mensaje = f"Listado de pedidos del vendedor: {idVendedor}"
-            salida.pedidos=pedidos
+            salida.pedidos = pedidos
 
 
         except Exception as ex:
             print(ex)
-            salida.estatus="ERROR"
-            salida.mensaje="Error al consultar los pedidos por vendedor, contacta al admin"
+            salida.estatus = "ERROR"
+            salida.mensaje = "Error al consultar los pedidos por vendedor, contacta al admin"
         return salida
